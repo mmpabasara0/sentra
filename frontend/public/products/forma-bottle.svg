@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="700" viewBox="0 0 900 700" role="img" aria-label="Forma Training Bottle">
+  <rect width="900" height="700" rx="36" fill="#172033"/>
+  <circle cx="665" cy="180" r="180" fill="#f4c95d" opacity=".14"/>
+  <rect x="375" y="105" width="150" height="78" rx="30" fill="#d1fae5"/>
+  <rect x="340" y="165" width="220" height="430" rx="76" fill="#7dd3a8"/>
+  <rect x="380" y="218" width="140" height="82" rx="32" fill="#111827" opacity=".18"/>
+  <rect x="380" y="342" width="140" height="26" rx="13" fill="#f8fafc" opacity=".78"/>
+  <rect x="400" y="390" width="100" height="26" rx="13" fill="#f8fafc" opacity=".54"/>
+  <ellipse cx="450" cy="606" rx="150" ry="32" fill="#0f172a" opacity=".62"/>
+</svg>

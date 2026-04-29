@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="700" viewBox="0 0 900 700" role="img" aria-label="Pulse Yoga Mat">
+  <rect width="900" height="700" rx="36" fill="#111827"/>
+  <rect x="172" y="352" width="556" height="92" rx="46" fill="#7dd3a8"/>
+  <rect x="220" y="376" width="460" height="44" rx="22" fill="#d1fae5"/>
+  <circle cx="242" cy="398" r="46" fill="#f8fafc"/>
+  <circle cx="658" cy="398" r="46" fill="#f8fafc"/>
+  <circle cx="734" cy="160" r="130" fill="#f4c95d" opacity=".14"/>
+</svg>

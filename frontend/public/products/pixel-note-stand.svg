@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="700" viewBox="0 0 900 700" role="img" aria-label="Pixel Note Stand">
+  <rect width="900" height="700" rx="36" fill="#16202f"/>
+  <path d="M288 450 438 210l150 240" fill="none" stroke="#f8fafc" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="336" y="448" width="228" height="30" rx="15" fill="#7dd3a8"/>
+  <rect x="378" y="272" width="144" height="108" rx="18" fill="#f4c95d"/>
+  <rect x="402" y="304" width="96" height="14" rx="7" fill="#111827" opacity=".35"/>
+  <rect x="402" y="332" width="78" height="14" rx="7" fill="#111827" opacity=".25"/>
+  <circle cx="148" cy="172" r="112" fill="#7dd3a8" opacity=".12"/>
+</svg>

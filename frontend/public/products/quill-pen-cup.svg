@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="700" viewBox="0 0 900 700" role="img" aria-label="Quill Pen Cup">
+  <rect width="900" height="700" rx="36" fill="#111827"/>
+  <path d="M398 170 342 352" stroke="#f4c95d" stroke-width="18" stroke-linecap="round"/>
+  <path d="M502 170 558 352" stroke="#d1fae5" stroke-width="18" stroke-linecap="round"/>
+  <rect x="334" y="318" width="232" height="204" rx="34" fill="#f8fafc"/>
+  <rect x="384" y="390" width="132" height="18" rx="9" fill="#7dd3a8"/>
+  <circle cx="164" cy="148" r="108" fill="#7dd3a8" opacity=".12"/>
+</svg>
