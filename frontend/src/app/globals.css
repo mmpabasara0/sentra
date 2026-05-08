@@ -1,0 +1,366 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --background: oklch(0.145 0.018 250);
+  --foreground: oklch(0.96 0.009 240);
+  --card: oklch(0.19 0.02 250);
+  --muted: oklch(0.245 0.022 250);
+  --muted-foreground: oklch(0.72 0.018 245);
+  --border: oklch(0.32 0.022 250);
+  --primary: oklch(0.68 0.15 154);
+  --primary-foreground: oklch(0.13 0.018 250);
+  --danger: oklch(0.64 0.18 25);
+  --warning: oklch(0.76 0.13 82);
+  --success: oklch(0.68 0.15 154);
+  --surface-glass: color-mix(in oklab, var(--card) 78%, transparent);
+  --shadow-soft: 0 24px 80px -45px color-mix(in oklab, var(--primary) 38%, black);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html.light {
+  color-scheme: light;
+  --background: oklch(0.978 0.006 245);
+  --foreground: oklch(0.18 0.018 245);
+  --card: oklch(1 0 0);
+  --muted: oklch(0.93 0.009 245);
+  --muted-foreground: oklch(0.46 0.018 245);
+  --border: oklch(0.86 0.012 245);
+  --primary: oklch(0.55 0.13 154);
+  --primary-foreground: oklch(0.99 0.004 245);
+  --danger: oklch(0.56 0.17 25);
+  --warning: oklch(0.64 0.12 82);
+  --success: oklch(0.52 0.13 154);
+  --surface-glass: color-mix(in oklab, var(--card) 82%, transparent);
+  --shadow-soft: 0 24px 75px -48px color-mix(in oklab, var(--foreground) 38%, transparent);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--background);
+}
+
+body {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 14% 8%, color-mix(in oklab, var(--primary) 22%, transparent), transparent 28rem),
+    radial-gradient(circle at 78% 0%, color-mix(in oklab, var(--warning) 10%, transparent), transparent 22rem),
+    var(--background);
+}
+
+html[data-preloader="pending"] {
+  overflow: hidden;
+}
+
+html[data-preloader="pending"] body > *:not(.preloader-root) {
+  visibility: hidden;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  transition: border-color 220ms var(--ease-out), background-color 220ms var(--ease-out), color 220ms var(--ease-out), transform 220ms var(--ease-out), opacity 220ms var(--ease-out), box-shadow 220ms var(--ease-out);
+}
+
+button:active,
+a:active {
+  transform: translateY(1px);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--primary) 42%, transparent);
+}
+
+.reveal {
+  animation: reveal 620ms var(--ease-out) both;
+  animation-delay: calc(var(--delay, 0) * 80ms);
+}
+
+.float-soft {
+  animation: float-soft 7s ease-in-out infinite;
+}
+
+.shimmer {
+  background: linear-gradient(90deg, transparent, color-mix(in oklab, var(--foreground) 10%, transparent), transparent);
+  background-size: 220% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+.cart-count-badge {
+  animation: cart-bump 360ms var(--ease-out) both;
+}
+
+.cart-added-flash,
+.cart-line-item,
+.comment-item,
+.review-result {
+  animation: reveal 420ms var(--ease-out) both;
+}
+
+.add-card-pop,
+.add-button-pop {
+  animation: add-pop 420ms var(--ease-out) both;
+}
+
+.checkout-section,
+.review-card {
+  transition: transform 260ms var(--ease-out), border-color 260ms var(--ease-out), box-shadow 260ms var(--ease-out);
+}
+
+.checkout-section:focus-within,
+.review-card:focus-within {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--primary) 58%, var(--border));
+  box-shadow: var(--shadow-soft);
+}
+
+.comment-panel {
+  animation: comment-open 280ms var(--ease-out) both;
+  transform-origin: top;
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+.preloader-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 240ms var(--ease-out), visibility 240ms var(--ease-out);
+}
+
+.preloader-root.is-active,
+html[data-preloader="pending"] .preloader-root {
+  pointer-events: auto;
+  opacity: 1;
+  visibility: visible;
+}
+
+.preloader-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--primary) 18%, transparent), transparent 26rem),
+    radial-gradient(circle at 82% 0%, color-mix(in oklab, var(--warning) 10%, transparent), transparent 22rem),
+    color-mix(in oklab, var(--background) 94%, black 6%);
+  backdrop-filter: blur(18px);
+  animation: preloader-fade-in 240ms var(--ease-out) both;
+}
+
+.preloader-panel {
+  position: relative;
+  display: grid;
+  gap: 1.25rem;
+  width: min(100%, 32rem);
+  padding: 1.5rem;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklab, var(--border) 88%, transparent);
+  border-radius: 1.5rem;
+  background: color-mix(in oklab, var(--card) 84%, transparent);
+  box-shadow: var(--shadow-soft);
+}
+
+.preloader-glow {
+  position: absolute;
+  inset: -30% auto auto 50%;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary) 28%, transparent);
+  filter: blur(42px);
+  transform: translateX(-50%);
+  opacity: 0.9;
+}
+
+.preloader-lottie-wrap {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 17rem);
+  margin-inline: auto;
+  aspect-ratio: 1;
+  padding: 0.25rem;
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--card) 92%, transparent), color-mix(in oklab, var(--muted) 75%, transparent));
+}
+
+.preloader-fallback-orb {
+  width: 72%;
+  height: 72%;
+  margin: 14% auto;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 30% 30%, color-mix(in oklab, var(--primary) 82%, white 18%), transparent 42%),
+    radial-gradient(circle at 68% 68%, color-mix(in oklab, var(--warning) 54%, transparent), transparent 34%),
+    linear-gradient(135deg, color-mix(in oklab, var(--primary) 38%, transparent), color-mix(in oklab, var(--card) 94%, transparent));
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--border) 80%, transparent);
+  animation: float-soft 2.2s ease-in-out infinite;
+}
+
+.preloader-lottie-wrap canvas,
+.preloader-lottie-wrap svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.preloader-copy {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.preloader-copy h2 {
+  font-size: clamp(1.65rem, 2vw, 2.25rem);
+  font-weight: 650;
+  letter-spacing: -0.04em;
+}
+
+.preloader-copy p {
+  max-width: 28ch;
+  margin: 0.5rem auto 0;
+  color: var(--muted-foreground);
+  line-height: 1.65;
+}
+
+.preloader-kicker {
+  display: inline-flex;
+  margin-bottom: 0.65rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--primary) 12%, transparent);
+  color: var(--primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-soft {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 180% 0;
+  }
+  to {
+    background-position: -40% 0;
+  }
+}
+
+@keyframes cart-bump {
+  0% {
+    transform: scale(0.75);
+  }
+  55% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes add-pop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.985) translateY(1px);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes comment-open {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scaleY(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+@keyframes preloader-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes seller-switch-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.seller-switch-progress {
+  transform-origin: left center;
+  animation: seller-switch-progress 0.82s var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
