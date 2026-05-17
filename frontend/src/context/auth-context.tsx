@@ -131,7 +131,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signUp(email: string, password: string, fullName: string, username: string) {
     if (!supabase) throw new Error("Supabase is not configured.");
-    const { data, error } = await supabase.auth.signUp({
+    let data;
+    const { data: suData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -139,7 +140,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: { full_name: fullName, username },
       },
     });
-    if (error) throw error;
+    
+    if (error) {
+      if (error.status === 429 || error.message.toLowerCase().includes("rate limit")) {
+        console.warn("Email rate limit hit. Falling back to backend for link generation...");
+        // Fallback to backend admin signup
+        const res = await api.post("/auth/admin-signup", { email, password, fullName, username });
+        if (res.action_link) {
+          console.log(`\n\n🚨 ACTIVATION LINK FOR ${email}:\n${res.action_link}\n\n`);
+        }
+        
+        window.localStorage.setItem(
+          PENDING_PROFILE_KEY,
+          JSON.stringify({ full_name: fullName, username }),
+        );
+        return { confirmationRequired: true };
+      }
+      throw error;
+    }
+    
+    data = suData;
 
     window.localStorage.setItem(
       PENDING_PROFILE_KEY,

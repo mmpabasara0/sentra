@@ -148,10 +148,10 @@ function AccountMenu() {
   // Admin users who are also sellers can still switch modes.
   // - Seller on seller pages: show "Switch to customer"
   // - Seller on customer pages: show "Switch to seller"
-  // - Non-seller (and non-admin): show "Become a seller" link
+  // - Non-seller: show "Become a seller" link
   const showSwitchToCustomer = isSeller && isOnSellerPages;
   const showSwitchToSeller = isSeller && !isOnSellerPages;
-  const showBecomeASeller = !isAdmin && !isSeller;
+  const showBecomeASeller = !isSeller;
 
   const roleLabel = isAdmin && isSeller
     ? "Admin & Seller account"

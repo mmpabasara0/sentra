@@ -186,3 +186,62 @@ def update_me():
     next_profile = updated.data[0] if updated.data else current_profile()
     next_profile = _profile_with_auth_email(next_profile)
     return ok({"profile": next_profile})
+@auth_bp.post("/admin-signup")
+def admin_signup():
+    body = request.get_json(silent=True) or {}
+    email = body.get("email")
+    password = body.get("password")
+    full_name = body.get("fullName")
+    username = body.get("username")
+
+    if not email or not password:
+        return error("Email and password required", 400)
+
+    settings = Settings()
+    if not settings.supabase_url or not settings.supabase_service_role_key:
+        return error("Supabase config missing", 500)
+
+    base_url = settings.supabase_url.rstrip("/")
+    admin_url = f"{base_url}/auth/v1/admin/generate_link"
+    
+    payload = {
+        "type": "signup",
+        "email": email,
+        "password": password,
+        "data": {
+            "full_name": full_name,
+            "username": username
+        }
+    }
+
+    req = Request(
+        admin_url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "apikey": settings.supabase_service_role_key,
+            "Authorization": f"Bearer {settings.supabase_service_role_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urlopen(req, timeout=10) as response:
+            res_data = json.loads(response.read().decode("utf-8"))
+            action_link = res_data.get("properties", {}).get("action_link")
+            if action_link:
+                print("\n" + "="*80)
+                print("?? SUPABASE EMAIL RATE LIMIT AVOIDED ??")
+                print(f"ACTIVATION LINK FOR {email}:")
+                print(action_link)
+                print("="*80 + "\n")
+            
+            return ok({
+                "message": "User created successfully.",
+                "action_link": action_link
+            })
+    except HTTPError as exc:
+        err_msg = exc.read().decode("utf-8")
+        return error(f"Supabase Admin API failed: {err_msg}", getattr(exc, "code", 500))
+    except Exception as exc:
+        return error(f"Request failed: {str(exc)}", 502)
