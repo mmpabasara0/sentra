@@ -145,7 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error.status === 429 || error.message.toLowerCase().includes("rate limit")) {
         console.warn("Email rate limit hit. Falling back to backend for link generation...");
         // Fallback to backend admin signup
-        const res = await api.post("/auth/admin-signup", { email, password, fullName, username });
+        const res = await api.post<{ action_link?: string }>("/auth/admin-signup", { email, password, fullName, username });
         if (res.action_link) {
           console.log(`\n\n🚨 ACTIVATION LINK FOR ${email}:\n${res.action_link}\n\n`);
         }
