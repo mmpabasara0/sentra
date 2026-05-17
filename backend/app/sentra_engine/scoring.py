@@ -71,6 +71,16 @@ def _account_age_hours(profile):
     return delta.total_seconds() / 3600.0
 
 
+def _int_override(review, key):
+    value = review.get(key)
+    if value in [None, ""]:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def text_risk(review, db, product=None):
     flags = []
     body = _normalize(review.get("body", ""))
@@ -122,15 +132,23 @@ def text_risk(review, db, product=None):
             if jaccard >= 0.6:
                 _add(flags, "Text Risk", "COPY_OF_PRODUCT_CONTENT", "Review wording closely mirrors the product listing.", 8)
 
-    duplicates = (
-        db.table("reviews")
-        .select("id, product_id, user_id")
-        .ilike("body", body)
-        .neq("user_id", review["user_id"])
-        .limit(3)
-        .execute()
-    )
-    if duplicates.data:
+    duplicate_override = review.get("duplicate_text_override")
+    duplicate_exists = False
+    if duplicate_override is True:
+        duplicate_exists = True
+    elif duplicate_override is False:
+        duplicate_exists = False
+    else:
+        duplicates = (
+            db.table("reviews")
+            .select("id, product_id, user_id")
+            .ilike("body", body)
+            .neq("user_id", review["user_id"])
+            .limit(3)
+            .execute()
+        )
+        duplicate_exists = bool(duplicates.data)
+    if duplicate_exists:
         _add(flags, "Text Risk", "DUPLICATE_TEXT", "Same review text exists from another user.", 12)
 
     positive = sum(1 for word in words if word in POSITIVE_WORDS)
@@ -146,10 +164,13 @@ def text_risk(review, db, product=None):
 def profile_risk(review, profile, db):
     flags = []
     username = profile.get("username") or ""
-    age_hours = _account_age_hours(profile)
+    age_hours = _int_override(review, "account_age_hours_override")
+    if age_hours is None:
+        age_hours = _account_age_hours(profile)
     rating = int(review.get("rating", 0))
     extreme = rating in (1, 5)
     has_purchase = False
+    purchase_override = review.get("verified_purchase_override")
 
     if age_hours is not None and age_hours < 72:
         _add(flags, "Profile Risk", "NEW_ACCOUNT", "User account is newly created.", 8)
@@ -159,19 +180,27 @@ def profile_risk(review, profile, db):
     if re.fullmatch(r"user\d{4,}", username.lower()):
         _add(flags, "Profile Risk", "RANDOM_USERNAME", "Username follows a random account pattern.", 5)
 
-    purchases = (
-        db.table("orders")
-        .select("id, order_items!inner(product_id)")
-        .eq("user_id", review["user_id"])
-        .eq("order_items.product_id", review["product_id"])
-        .execute()
-    )
-    has_purchase = bool(purchases.data)
+    if purchase_override is True:
+        has_purchase = True
+    elif purchase_override is False:
+        has_purchase = False
+    else:
+        purchases = (
+            db.table("orders")
+            .select("id, order_items!inner(product_id)")
+            .eq("user_id", review["user_id"])
+            .eq("order_items.product_id", review["product_id"])
+            .execute()
+        )
+        has_purchase = bool(purchases.data)
     if not has_purchase:
         _add(flags, "Profile Risk", "NO_VERIFIED_PURCHASE", "User has no purchase history for this product.", 8)
 
-    trust = db.table("user_trust_scores").select("*").eq("user_id", review["user_id"]).limit(1).execute()
-    if trust.data and trust.data[0].get("trust_score", 100) < 31:
+    trust_score = _int_override(review, "trust_score_override")
+    if trust_score is None:
+        trust = db.table("user_trust_scores").select("*").eq("user_id", review["user_id"]).limit(1).execute()
+        trust_score = trust.data[0].get("trust_score", 100) if trust.data else 100
+    if trust_score < 31:
         _add(flags, "Profile Risk", "LOW_TRUST_USER", "Reviewer trust score is high risk.", 10)
 
     if age_hours is not None and age_hours < 24 and extreme:
@@ -196,35 +225,49 @@ def profile_risk(review, profile, db):
 
 def behavior_risk(review, db):
     flags = []
-    recent = (
-        db.table("reviews")
-        .select("id")
-        .eq("user_id", review["user_id"])
-        .gte("created_at", _now_iso_minus(60))
-        .execute()
-    )
-    if len(recent.data or []) >= 4:
+    user_burst_count = _int_override(review, "review_burst_count_override")
+    if user_burst_count is None:
+        recent = (
+            db.table("reviews")
+            .select("id")
+            .eq("user_id", review["user_id"])
+            .gte("created_at", _now_iso_minus(60))
+            .execute()
+        )
+        user_burst_count = len(recent.data or [])
+    if user_burst_count >= 4:
         _add(flags, "Behavior Risk", "REVIEW_BURST", "User submitted many reviews in a short time.", 10)
 
-    same_text = (
-        db.table("reviews")
-        .select("id, product_id")
-        .eq("user_id", review["user_id"])
-        .ilike("body", _normalize(review.get("body", "")))
-        .neq("product_id", review["product_id"])
-        .execute()
-    )
-    if same_text.data:
+    same_text_override = review.get("same_text_other_products_override")
+    same_text_exists = False
+    if same_text_override is True:
+        same_text_exists = True
+    elif same_text_override is False:
+        same_text_exists = False
+    else:
+        same_text = (
+            db.table("reviews")
+            .select("id, product_id")
+            .eq("user_id", review["user_id"])
+            .ilike("body", _normalize(review.get("body", "")))
+            .neq("product_id", review["product_id"])
+            .execute()
+        )
+        same_text_exists = bool(same_text.data)
+    if same_text_exists:
         _add(flags, "Behavior Risk", "SAME_REVIEW_MULTIPLE_PRODUCTS", "Same user reused this review on other products.", 10)
 
-    product_reviews = (
-        db.table("reviews")
-        .select("id")
-        .eq("product_id", review["product_id"])
-        .gte("created_at", _now_iso_minus(30))
-        .execute()
-    )
-    if len(product_reviews.data or []) >= 5:
+    product_cluster_count = _int_override(review, "product_review_cluster_count_override")
+    if product_cluster_count is None:
+        product_reviews = (
+            db.table("reviews")
+            .select("id")
+            .eq("product_id", review["product_id"])
+            .gte("created_at", _now_iso_minus(30))
+            .execute()
+        )
+        product_cluster_count = len(product_reviews.data or [])
+    if product_cluster_count >= 5:
         _add(flags, "Behavior Risk", "PRODUCT_REVIEW_CLUSTER", "Product received a review cluster in a short window.", 7)
 
     return flags, clamp(sum(flag["score_impact"] for flag in flags), 25)
@@ -236,7 +279,19 @@ def device_risk(review, db):
     ip_hash = (review.get("ip_hash") or "").strip()
     user_id = review.get("user_id")
 
-    if fingerprint:
+    shared_device_accounts = _int_override(review, "shared_device_accounts_override")
+    device_burst_count = _int_override(review, "device_review_burst_count_override")
+    shared_ip_accounts = _int_override(review, "shared_ip_accounts_override")
+
+    if shared_device_accounts is not None and shared_device_accounts >= 2:
+        _add(
+            flags,
+            "Device Risk",
+            "MULTI_ACCOUNT_DEVICE",
+            f"This device fingerprint has been used by {shared_device_accounts} different accounts in the last 7 days.",
+            15,
+        )
+    elif fingerprint:
         device_rows = (
             db.table("reviews")
             .select("user_id")
@@ -270,7 +325,24 @@ def device_risk(review, db):
                 8,
             )
 
-    if ip_hash:
+    if device_burst_count is not None and device_burst_count >= 3:
+        _add(
+            flags,
+            "Device Risk",
+            "DEVICE_REVIEW_BURST",
+            "This device posted several reviews in the last hour.",
+            8,
+        )
+
+    if shared_ip_accounts is not None and shared_ip_accounts >= 2:
+        _add(
+            flags,
+            "Device Risk",
+            "MULTI_ACCOUNT_IP",
+            f"This IP has reviewed from {shared_ip_accounts} different accounts in the last 7 days.",
+            12,
+        )
+    elif ip_hash:
         ip_rows = (
             db.table("reviews")
             .select("user_id")
@@ -297,28 +369,37 @@ def rating_anomaly_risk(review, profile, db):
     if rating not in [1, 5]:
         return flags, 0
 
-    reviews = (
-        db.table("reviews")
-        .select("id, rating, user_id, profiles!inner(created_at)")
-        .eq("product_id", review["product_id"])
-        .eq("rating", rating)
-        .gte("created_at", _now_iso_minus(120))
-        .execute()
-    )
-    if len(reviews.data or []) >= 4:
+    extreme_rating_burst = _int_override(review, "extreme_rating_burst_count_override")
+    new_account_cluster = _int_override(review, "new_account_rating_cluster_count_override")
+
+    reviews = None
+    if extreme_rating_burst is None or new_account_cluster is None:
+        reviews = (
+            db.table("reviews")
+            .select("id, rating, user_id, profiles!inner(created_at)")
+            .eq("product_id", review["product_id"])
+            .eq("rating", rating)
+            .gte("created_at", _now_iso_minus(120))
+            .execute()
+        )
+
+    if extreme_rating_burst is None:
+        extreme_rating_burst = len((reviews.data or []) if reviews else [])
+    if extreme_rating_burst >= 4:
         _add(flags, "Rating Anomaly Risk", "EXTREME_RATING_BURST", f"Product has a burst of {rating}-star reviews.", 8)
 
-    new_accounts = 0
-    for row in reviews.data or []:
-        created_at = row.get("profiles", {}).get("created_at")
-        if created_at:
-            try:
-                created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-                if (datetime.now(timezone.utc) - created).days < 7:
-                    new_accounts += 1
-            except ValueError:
-                continue
-    if new_accounts >= 3:
+    if new_account_cluster is None:
+        new_account_cluster = 0
+        for row in reviews.data or []:
+            created_at = row.get("profiles", {}).get("created_at")
+            if created_at:
+                try:
+                    created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                    if (datetime.now(timezone.utc) - created).days < 7:
+                        new_account_cluster += 1
+                except ValueError:
+                    continue
+    if new_account_cluster >= 3:
         _add(flags, "Rating Anomaly Risk", "NEW_ACCOUNT_RATING_CLUSTER", "Several new accounts reviewed this product recently.", 9)
 
     return flags, clamp(sum(flag["score_impact"] for flag in flags), 15)

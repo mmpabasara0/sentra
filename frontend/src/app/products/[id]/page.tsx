@@ -149,12 +149,16 @@ export default function ProductDetailPage() {
   }, [identifier]);
 
   const ratingBreakdown = useMemo(() => {
-    const rating = product?.average_rating || 4.4;
-    return [5, 4, 3, 2, 1].map((stars) => ({
-      stars,
-      width: stars === 5 ? rating * 18 : Math.max(8, (6 - stars) * 7),
-    }));
-  }, [product?.average_rating]);
+    const total = reviews.length;
+    return [5, 4, 3, 2, 1].map((stars) => {
+      const count = reviews.filter((review) => review.rating === stars).length;
+      return {
+        stars,
+        count,
+        width: total > 0 ? (count / total) * 100 : 0,
+      };
+    });
+  }, [reviews]);
 
   const productImages = useMemo(() => {
     if (!product) return [];

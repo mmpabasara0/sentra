@@ -1210,6 +1210,14 @@ def test_review():
     if not product_id:
         return error("No product available to score against.", 400, "no_product")
 
+    profile_overrides = {
+        "username": body.get("username", target_profile.get("username", "")),
+        "full_name": body.get("full_name", target_profile.get("full_name", "")),
+        "phone": body.get("phone", target_profile.get("phone", "")),
+        "address": body.get("address", target_profile.get("address", "")),
+    }
+    review_profile = {**target_profile, **profile_overrides}
+
     draft = {
         "product_id": product_id,
         "user_id": target_profile["id"],
@@ -1217,11 +1225,23 @@ def test_review():
         "title": body.get("title", ""),
         "body": (body.get("body") or "").strip(),
         "is_verified_purchase": False,
+        "verified_purchase_override": body.get("verified_purchase_override"),
+        "account_age_hours_override": body.get("account_age_hours_override"),
+        "trust_score_override": body.get("trust_score_override"),
+        "duplicate_text_override": body.get("duplicate_text_override"),
+        "review_burst_count_override": body.get("review_burst_count_override"),
+        "same_text_other_products_override": body.get("same_text_other_products_override"),
+        "product_review_cluster_count_override": body.get("product_review_cluster_count_override"),
+        "shared_device_accounts_override": body.get("shared_device_accounts_override"),
+        "shared_ip_accounts_override": body.get("shared_ip_accounts_override"),
+        "device_review_burst_count_override": body.get("device_review_burst_count_override"),
+        "extreme_rating_burst_count_override": body.get("extreme_rating_burst_count_override"),
+        "new_account_rating_cluster_count_override": body.get("new_account_rating_cluster_count_override"),
         "status": "pending",
         "risk_score": 0,
         "risk_label": "Pending",
     }
-    analysis = analyze_review(draft, target_profile)
+    analysis = analyze_review(draft, review_profile)
     return ok(
         {
             "analysis": analysis,
@@ -1231,7 +1251,7 @@ def test_review():
                 "body": draft["body"],
                 "product_id": product_id,
                 "user_id": target_profile["id"],
-                "username": target_profile.get("username"),
+                "username": review_profile.get("username"),
             },
         }
     )
@@ -1244,19 +1264,20 @@ def sentra_sample_targets():
     db = get_supabase()
     products = (
         db.table("products")
-        .select("id, name, average_rating")
+        .select("id, name, average_rating, category, seller_name")
         .order("created_at", desc=True)
         .limit(12)
         .execute()
     )
     profiles = (
         db.table("profiles")
-        .select("id, full_name, username, role, status")
+        .select("id, full_name, username, role, status, created_at, phone, address")
         .order("created_at", desc=True)
-        .limit(20)
+        .limit(40)
         .execute()
     )
-    return ok({"products": products.data or [], "profiles": profiles.data or []})
+    visible_profiles = [profile for profile in (profiles.data or []) if not _is_deleted_profile(profile)]
+    return ok({"products": products.data or [], "profiles": visible_profiles[:20]})
 
 
 @admin_bp.get("/analytics/overview")

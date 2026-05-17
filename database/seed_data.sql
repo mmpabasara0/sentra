@@ -13,6 +13,9 @@ values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', '00000000-0000-4000-8000-000000000001', 'Maleesha Perera', 'maleesha_p', 'admin', '+94 77 412 9081', 'Colombo 05', 'active', now() - interval '120 days'),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', '00000000-0000-4000-8000-000000000002', 'Naveen Rathnayake', 'naveen_r', 'customer', '+94 71 846 2042', 'Kandy', 'active', now() - interval '90 days'),
   ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', '00000000-0000-4000-8000-000000000003', 'Imasha Fernando', 'imasha_f', 'customer', '+94 76 304 7721', 'Galle', 'active', now() - interval '65 days'),
+  ('12121212-1212-4121-8121-121212121212', '00000000-0000-4000-8000-000000000006', 'Genuine Silva', 'user_genuine', 'customer', '+94 70 111 2233', 'Maharagama', 'active', now() - interval '240 days'),
+  ('13131313-1313-4131-8131-131313131313', '00000000-0000-4000-8000-000000000007', 'Old Monitor Perera', 'user_old', 'customer', '+94 70 222 3344', 'Kurunegala', 'monitored', now() - interval '420 days'),
+  ('14141414-1414-4141-8141-141414141414', '00000000-0000-4000-8000-000000000008', 'New Watcher', 'user_new', 'customer', '', '', 'active', now() - interval '12 hours'),
   ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', '00000000-0000-4000-8000-000000000004', '', 'user84729', 'customer', '', '', 'monitored', now() - interval '1 day'),
   ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', '00000000-0000-4000-8000-000000000005', '', 'user91384', 'customer', '', '', 'monitored', now() - interval '1 day')
 on conflict (id) do nothing;
@@ -49,6 +52,9 @@ insert into user_trust_scores (user_id, trust_score, trust_label, approved_revie
 values
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 88, 'Trusted Reviewer', 1, 0, 0),
   ('cccccccc-cccc-4ccc-8ccc-cccccccccccc', 82, 'Trusted Reviewer', 1, 0, 0),
+  ('12121212-1212-4121-8121-121212121212', 91, 'Trusted Reviewer', 4, 0, 0),
+  ('13131313-1313-4131-8131-131313131313', 46, 'Moderate Risk Reviewer', 2, 1, 1),
+  ('14141414-1414-4141-8141-141414141414', 24, 'High Risk Reviewer', 0, 1, 0),
   ('dddddddd-dddd-4ddd-8ddd-dddddddddddd', 38, 'Moderate Risk Reviewer', 0, 1, 0),
   ('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee', 18, 'High Risk Reviewer', 0, 0, 0)
 on conflict (user_id) do update set trust_score = excluded.trust_score, trust_label = excluded.trust_label;
